@@ -1,0 +1,27 @@
+{
+  "name": "ndut-mqtt",
+  "version": "0.5.5",
+  "description": "MQTT Client for Ndut Framework",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ardhi/ndut-mqtt.git"
+  },
+  "keywords": [
+    "ndut",
+    "mqtt",
+    "client",
+    "fastify"
+  ],
+  "author": "Ardhi Lukianto <ardhi@lukianto.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ardhi/ndut-mqtt/issues"
+  },
+  "homepage": "https://github.com/ardhi/ndut-mqtt#readme",
+  "dependencies": {
+    "mqtt": "^4.3.4"
+  }
+}

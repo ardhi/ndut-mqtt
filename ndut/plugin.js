@@ -6,11 +6,11 @@ const mqttEvents = ['connect', 'reconnect', 'close', 'disconnect', 'offline', 'e
 module.exports = async function (scope, options) {
   const { _, fastGlob, getNdutConfig, getConfig, aneka } = scope.ndut.helper
   const { mqtt } = scope.ndutMqtt.helper
-  const config = await getConfig()
+  const config = getConfig()
   const instance = {}
   const event = {}
   for (const n of config.nduts) {
-    const cfg = await getNdutConfig(n)
+    const cfg = getNdutConfig(n)
     const files = await fastGlob(`${cfg.dir}/ndutMqtt/event/*.js`)
     for (const f of files) {
       let [base, conn] = path.basename(f, '.js').split('@')
@@ -48,7 +48,7 @@ module.exports = async function (scope, options) {
         filterEvent(evt, { connection: c.name }, c.name, ...args)
           .then()
           .catch(err => {
-            console.log(err)
+            // console.log(err)
           })
       })
     }

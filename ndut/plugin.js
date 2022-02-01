@@ -3,7 +3,7 @@ const path = require('path')
 const mqttEvents = ['connect', 'reconnect', 'close', 'disconnect', 'offline', 'error', 'end',
   'message', 'packetsend', 'packetreceive']
 
-module.exports = async function (scope, options) {
+const plugin = async function (scope, options) {
   const { _, fastGlob, getNdutConfig, getConfig, aneka } = scope.ndut.helper
   const { mqtt } = scope.ndutMqtt.helper
   const config = getConfig()
@@ -67,4 +67,9 @@ module.exports = async function (scope, options) {
       done()
     })
   })
+}
+
+module.exports = async function () {
+  const { fp } = this.ndut.helper
+  return fp(plugin)
 }

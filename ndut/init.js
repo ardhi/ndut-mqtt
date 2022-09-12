@@ -9,10 +9,6 @@ module.exports = async function (options) {
       else c.name = 'default'
     }
     c.options = c.options || {}
-    if (c.subscribe) {
-      if (_.isString(c.subscribe)) c.subscribe = { topic: c.subscribe }
-      c.subscribe.options = c.subscribe.options || {}
-    }
   }
   const names = _.map(options.connections, 'name')
   const uniqNames = _.uniq(names)

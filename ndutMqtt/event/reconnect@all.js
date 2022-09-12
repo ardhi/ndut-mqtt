@@ -1,3 +1,3 @@
 module.exports = async function (conn) {
-  this.log.debug(`[MQTT][${conn}] reconnected`)
+  this.log.debug(`[MQTT][${conn.name}] reconnected`)
 }

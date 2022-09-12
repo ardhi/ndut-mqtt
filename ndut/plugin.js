@@ -9,6 +9,8 @@ const plugin = async function (scope, options) {
   const config = getConfig()
   const instance = {}
   const event = {}
+  const subscribe = {}
+
   for (const n of config.nduts) {
     const cfg = getNdutConfig(n)
     const files = await fastGlob(`${cfg.dir}/ndutMqtt/event/*.js`)
@@ -22,34 +24,43 @@ const plugin = async function (scope, options) {
       if (!event[base]) event[base] = []
       if (conn === 'all') conn = _.map(options.connections, 'name')
       else conn = conn.split(',')
-      _.each(conn, c => {
-        mod.connection = c
-        event[base].push(mod)
-      })
+      for (const c of conn) {
+        event[base].push(_.merge({}, mod, { connection: c }))
+      }
     }
   }
 
-  const filterEvent = (name, filter, ...args) => {
-    const evts = _.filter(event[name] || [], filter)
-    return Promise.all(_.map(evts, evt => {
-      return evt.handler.call(scope, ...args)
-    }))
+  for (const n of config.nduts) {
+    const cfg = getNdutConfig(n)
+    const files = await fastGlob(`${cfg.dir}/ndutMqtt/subscribe/*.js`)
+    for (const f of files) {
+      let [base, conn] = path.basename(f, '.js').split('@')
+      base = base.replace(/\-/g, '/') // base = topic
+      if (!conn) conn = 'default'
+      let mod = require(f)
+      if (_.isFunction(mod)) mod = { handler: mod }
+      if (!mod.handler) throw new Error('No handler provided')
+      if (!subscribe[base]) subscribe[base] = []
+      if (conn === 'all') conn = _.map(options.connections, 'name')
+      else conn = conn.split(',')
+      for (const c of conn) {
+        subscribe[base].push(_.merge({}, mod, { connection: c }))
+      }
+    }
   }
+  scope.ndutMqtt.subscribe = subscribe
 
   for (const c of options.connections) {
+    if (!c.options.clientId) c.options.clientId = scope.ndutDb.helper.generateId()
     const client = mqtt.connect(c.url, c.options)
     for (const evt of mqttEvents) {
       client.on(evt, (...args) => {
-        if (evt === 'connect' && c.subscribe) {
-          client.subscribe(c.subscribe.topic, c.subscribe.options, err => {
-            if (err) scope.log.error(`[MQTT][${c.name}] Subscribe error: ${err.message}`)
-          })
+        const evts = _.filter(event[evt] || [], { connection: c.name })
+        if (evts.length > 0) {
+          for (const e of evts) {
+            e.handler.call(scope, c, ...args).then().catch(err => {})
+          }
         }
-        filterEvent(evt, { connection: c.name }, c.name, ...args)
-          .then()
-          .catch(err => {
-            // console.log(err)
-          })
       })
     }
     instance[c.name] = client

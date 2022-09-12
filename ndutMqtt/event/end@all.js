@@ -1,3 +1,3 @@
 module.exports = async function (conn) {
-  this.log.debug(`[MQTT][${conn}] ended`)
+  this.log.debug(`[MQTT][${conn.name}] ended`)
 }

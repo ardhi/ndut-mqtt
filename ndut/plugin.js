@@ -33,18 +33,21 @@ const plugin = async function (scope, options) {
   for (const n of config.nduts) {
     const cfg = getNdutConfig(n)
     const files = await fastGlob(`${cfg.dir}/ndutMqtt/subscribe/*.js`)
+    // TODO: topic with special chars
     for (const f of files) {
       let [base, conn] = path.basename(f, '.js').split('@')
       base = base.replace(/\-/g, '/') // base = topic
       if (!conn) conn = 'default'
       let mod = require(f)
-      if (_.isFunction(mod)) mod = { handler: mod }
+      if (_.isFunction(mod)) mod = { handler: mod, topic: base }
+      else if (!mod.topic) mod.topic = base
       if (!mod.handler) throw new Error('No handler provided')
-      if (!subscribe[base]) subscribe[base] = []
+      if (!mod.topic) throw new Error('No topic provided')
+      if (!subscribe[mod.topic]) subscribe[mod.topic] = []
       if (conn === 'all') conn = _.map(options.connections, 'name')
       else conn = conn.split(',')
       for (const c of conn) {
-        subscribe[base].push(_.merge({}, mod, { connection: c }))
+        subscribe[mod.topic].push(_.merge({}, mod, { connection: c }))
       }
     }
   }

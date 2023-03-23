@@ -9,7 +9,6 @@ const plugin = async function (scope, options) {
   const config = getConfig()
   const instance = {}
   const event = {}
-  const subscribe = {}
 
   for (const n of config.nduts) {
     const cfg = getNdutConfig(n)
@@ -39,19 +38,15 @@ const plugin = async function (scope, options) {
       base = base.replace(/\-/g, '/') // base = topic
       if (!conn) conn = 'default'
       let mod = require(f)
-      if (_.isFunction(mod)) mod = { handler: mod, topic: base }
-      else if (!mod.topic) mod.topic = base
-      if (!mod.handler) throw new Error('No handler provided')
-      if (!mod.topic) throw new Error('No topic provided')
-      if (!subscribe[mod.topic]) subscribe[mod.topic] = []
-      if (conn === 'all') conn = _.map(options.connections, 'name')
-      else conn = conn.split(',')
-      for (const c of conn) {
-        subscribe[mod.topic].push(_.merge({}, mod, { connection: c }))
-      }
+      let topic = base
+      let handler
+      if (_.isFunction(mod)) handler = mod
+      else if (_.isFunction(mod.topic)) topic = await mod.topic.call(this)
+      if (!handler) throw new Error('No handler provided')
+      if (!topic) throw new Error('No topic provided')
+      await this.ndutMqtt.helper.subscribe(topic, handler, conn)
     }
   }
-  scope.ndutMqtt.subscribe = subscribe
 
   for (const c of options.connections) {
     if (!c.options.clientId) c.options.clientId = scope.ndutDb.helper.generateId()

@@ -40,11 +40,12 @@ const plugin = async function (scope, options) {
       let mod = require(f)
       let topic = base
       let handler
+      if (_.isFunction(mod.topic)) topic = await mod.topic.call(scope)
       if (_.isFunction(mod)) handler = mod
-      else if (_.isFunction(mod.topic)) topic = await mod.topic.call(this)
-      if (!handler) throw new Error('No handler provided')
-      if (!topic) throw new Error('No topic provided')
-      await this.ndutMqtt.helper.subscribe(topic, handler, conn)
+      else handler = mod.handler
+      if (!handler) continue
+      if (!topic) continue
+      await scope.ndutMqtt.helper.subscribe(topic, handler, conn)
     }
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "ndut-mqtt",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "MQTT Client for Ndut Framework",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

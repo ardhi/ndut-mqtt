@@ -1,3 +1,4 @@
 {
-  "singleWorker": true
+  "singleWorker": true,
+  "connections": []
 }

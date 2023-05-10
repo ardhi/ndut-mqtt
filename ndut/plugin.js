@@ -36,16 +36,24 @@ const plugin = async function (scope, options) {
     for (const f of files) {
       let [base, conn] = path.basename(f, '.js').split('@')
       base = base.replace(/\-/g, '/') // base = topic
-      if (!conn) conn = 'default'
+      if (!conn) conn = ['default']
+      else conn = conn.split(',')
       let mod = require(f)
       let topic = base
       let handler
-      if (_.isFunction(mod.topic)) topic = await mod.topic.call(scope)
       if (_.isFunction(mod)) handler = mod
-      else handler = mod.handler
+      else {
+        handler = mod.handler
+        if (_.isFunction(mod.topic)) topic = await mod.topic.call(scope)
+        else if (_.isString(mod.topic)) topic = mod.topic
+        conn = mod.connection || conn
+      }
       if (!handler) continue
       if (!topic) continue
-      await scope.ndutMqtt.helper.subscribe(topic, handler, conn)
+      if (_.isString(conn)) conn = [conn]
+      for (const c of conn) {
+        await scope.ndutMqtt.helper.subscribe(topic, handler, c)
+      }
     }
   }
 

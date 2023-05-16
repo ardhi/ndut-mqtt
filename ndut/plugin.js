@@ -39,20 +39,16 @@ const plugin = async function (scope, options) {
       if (!conn) conn = ['default']
       else conn = conn.split(',')
       let mod = require(f)
-      let topic = base
-      let handler
-      if (_.isFunction(mod)) handler = mod
-      else {
-        handler = mod.handler
-        if (_.isFunction(mod.topic)) topic = await mod.topic.call(scope)
-        else if (_.isString(mod.topic)) topic = mod.topic
-        conn = mod.connection || conn
-      }
-      if (!handler) continue
-      if (!topic) continue
-      if (_.isString(conn)) conn = [conn]
-      for (const c of conn) {
-        await scope.ndutMqtt.helper.subscribe(topic, handler, c)
+      let subs = []
+      if (_.isFunction(mod)) mod = mod.length === 0 ? await mod.call(scope) : { handler: mod }
+      if (_.isPlainObject(mod)) {
+        if (!mod.topic) mod.topic = base
+        if (!mod.connection) mod.connection = conn
+        else if (_.isFunction(mod.topic)) mod.topic = await mod.topic.call(scope)
+        subs.push(mod)
+      } else if (_.isArray(mod)) subs = mod
+      for (const s of subs) {
+        scope.ndutMqtt.helper.subscribe(s)
       }
     }
   }

@@ -1,15 +1,19 @@
-module.exports = async function (topic, handler, conn = 'default', now) {
+module.exports = function (topic, handler, conn = 'default', now, publish) {
   const { _, getNdutConfig } = this.ndut.helper
-  const options = getNdutConfig('ndutMqtt')
+  let opts = _.cloneDeep(topic)
+  if (_.isString(topic)) opts = { topic, handler, connection: conn, bindNow: now, publish }
+  const config = getNdutConfig('ndutMqtt')
   this.ndutMqtt.subscribe = this.ndutMqtt.subscribe || {}
-  if (!this.ndutMqtt.subscribe[topic]) this.ndutMqtt.subscribe[topic] = []
-  if (conn === 'all') conn = _.map(options.connections, 'name')
-  else conn = conn.split(',')
-  for (const c of conn) {
-    this.ndutMqtt.subscribe[topic].push(_.merge({}, { topic, handler }, { connection: c }))
+  if (opts.connection === 'all') opts.connection = _.map(config.connections, 'name')
+  else if (_.isString(opts.connection)) opts.connection = opts.connection.split(',')
+  if (!this.ndutMqtt.subscribe[opts.topic]) this.ndutMqtt.subscribe[opts.topic] = []
+  for (const c of opts.connection) {
+    const o = _.pick(opts, ['topic', 'handler', 'publish', 'relay'])
+    o.connection = c
+    this.ndutMqtt.subscribe[o.topic].push(o)
     if (now) {
-      this.ndutMqtt.instance[c].subscribe(topic)
-      this.log.debug(`[MQTT][${conn.name}] subscribed to ${t}`)
+      this.ndutMqtt.instance[c].subscribe(o)
+      this.log.debug(`[MQTT][${conn.name}] subscribed to ${o.topic}`)
     }
   }
 }

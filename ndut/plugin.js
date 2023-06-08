@@ -44,8 +44,8 @@ const plugin = async function (scope, options) {
       if (_.isPlainObject(mod)) {
         if (!mod.topic) mod.topic = base
         if (!mod.connection) mod.connection = conn
-        else if (_.isFunction(mod.topic)) mod.topic = await mod.topic.call(scope)
-        subs.push(mod)
+        if (_.isFunction(mod.topic)) mod.topic = await mod.topic.call(scope)
+        if (mod.topic && mod.connection && mod.handler) subs.push(mod)
       } else if (_.isArray(mod)) subs = mod
       for (const s of subs) {
         scope.ndutMqtt.helper.subscribe(s)

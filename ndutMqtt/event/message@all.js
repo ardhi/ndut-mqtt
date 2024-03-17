@@ -21,7 +21,11 @@ const handleRelay = async function(s, conn, ...args) {
   for (const r of relays) {
     const dconn = _.get(r, 'destination.connection')
     const dtopic = _.get(r, 'destination.topic', topic)
-    let dmsg = message
+    let dmsg = message.toString()
+    try {
+      dmsg = JSON.parse(dmsg)
+    } catch (err) {}
+    dmsg.source = r.source.connection
     if (r.converter) {
       const [ns, fn] = (r.converter.includes(':') ? r.converter : ('app:' + r.converter)).split(':')
       dmsg = await this[ns].helper[fn](dmsg, r)
